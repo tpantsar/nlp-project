@@ -16,6 +16,11 @@ def get_search_count(query):
     url = "https://www.googleapis.com/customsearch/v1"
     params = {"key": API_KEY, "cx": CX, "q": query}
     response = requests.get(url, params=params)
+
+    if response.status_code != 200:
+        print(f"Error: {response.json().get('error', {}).get('message')}")
+        return 0
+
     data = response.json()
     # Check if search information is present in the response
     try:
@@ -45,7 +50,7 @@ def web_jaccard_similarity(P, Q):
 
 
 # Example usage
-P = "apple"
-Q = "fruit"
+P = "laptop"
+Q = "computer"
 similarity_score = web_jaccard_similarity(P, Q)
 print(f"WebJaccard Similarity between '{P}' and '{Q}': {similarity_score}")
