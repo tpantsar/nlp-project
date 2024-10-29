@@ -1,0 +1,8 @@
+name: nlp-project
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - pip
+  - requests
+  - python-dotenv
