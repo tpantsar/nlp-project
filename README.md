@@ -8,6 +8,8 @@ This project aims to investigate the similarity between two phrases using intern
 
 https://console.cloud.google.com/apis/api/customsearch.googleapis.com
 
+https://console.cloud.google.com/apis/api/customsearch.googleapis.com/quotas?project=nlp-project-34673
+
 ## Add these variables to the .env file:
 
 ```
