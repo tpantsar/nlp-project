@@ -6,3 +6,6 @@ dependencies:
   - pip
   - requests
   - python-dotenv
+  - pandas
+  - scipy
+  - scikit-learn
