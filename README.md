@@ -7,8 +7,8 @@ This project aims to investigate the similarity between two phrases using intern
 ## Add these variables to the .env file:
 
 ```
-API_KEY=your_google_api_key
-CX=your_google_cx
+API_KEY=your_google_api_key (The API key for the Google Custom Search API)
+CX=your_google_cx (The identifier of the Programmable Search Engine)
 ```
 
 ## Install dependencies:
@@ -16,11 +16,17 @@ CX=your_google_cx
 ```
 conda env create --file environment.yml
 conda activate nlp-project
-
 conda env update --file environment.yml
 
+Git Bash:
 python -m venv .venv
-source .venv/bin/activate
+source .venv/Scripts/activate
+pip install -r requirements.txt
+
+PowerShell (Administrator):
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned
+python -m venv .venv
+.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
@@ -48,3 +54,7 @@ https://github.com/alexanderpanchenko/sim-eval
 https://console.cloud.google.com/apis/api/customsearch.googleapis.com
 
 https://console.cloud.google.com/apis/api/customsearch.googleapis.com/quotas?project=nlp-project-34673
+
+### Create a Custom Search Engine
+
+https://programmablesearchengine.google.com/controlpanel/create
