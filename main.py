@@ -27,14 +27,14 @@ def get_search_count(query):
         return 0
 
     data = response.json()
-    logger.info(f"Response for query '{query}': {data}")
+    logger.debug(f"Response for query '{query}': {data}")
     # Check if search information is present in the response
     try:
         count = int(data["searchInformation"]["totalResults"])
+        logger.info(f"Result count for query '{query}': {count}")
     except KeyError:  # Handle cases with no results
         count = 0
         logger.warning(f"No results found for query '{query}'")
-    logger.info(f"Result count for query '{query}': {count}")
     return count
 
 
@@ -89,8 +89,8 @@ def compute_correlation(dataset_path):
 
 def test():
     # Example usage
-    P = "implement"
-    Q = "tool"
+    P = "tiger"
+    Q = "tiger"
     similarity_score = web_jaccard_similarity(P, Q)
     result = f"WebJaccard Similarity between '{P}' and '{Q}': {similarity_score}"
     logger.info(result)
@@ -147,8 +147,8 @@ def calculate_correlations():
 
 
 def main():
-    normalize_human_scores()
-    # test()
+    # normalize_human_scores()
+    test()
     # calculate_correlations()
 
 
