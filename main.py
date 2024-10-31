@@ -95,10 +95,6 @@ def test():
     result = f"WebJaccard Similarity between '{P}' and '{Q}': {similarity_score}"
     logger.info(result)
 
-    # Save the similarity score to a file
-    with open("similarity_score.txt", "w") as file:
-        file.write(result)
-
 
 # Paths to datasets
 datasets = {
@@ -147,7 +143,7 @@ def calculate_correlations():
 
 
 def main():
-    # normalize_human_scores()
+    normalize_human_scores()
     test()
     # calculate_correlations()
 
