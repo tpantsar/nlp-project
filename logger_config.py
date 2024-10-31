@@ -1,5 +1,4 @@
 import logging
-import os
 
 # Logging levels
 # DEBUG: Detailed information, typically of interest only when diagnosing problems.
@@ -14,21 +13,19 @@ logger.setLevel(logging.INFO)
 
 # Create handlers
 console_handler = logging.StreamHandler()
+file_handler = logging.FileHandler("logger.log")
+file_handler_archive = logging.FileHandler("logger_archive.log")
 
 # Reset logger.log before running the script
-if os.path.exists("logger.log"):
-    os.remove("logger.log")
-file_handler = logging.FileHandler("logger.log")
-
-# Archive all logs in logger_archive.log
-file_handler_archive = logging.FileHandler("logger_archive.log")
+with open("logger.log", "w"):
+    pass
 
 # Set level and format for handlers
 console_handler.setLevel(logging.INFO)
 file_handler.setLevel(logging.INFO)
 file_handler_archive.setLevel(logging.INFO)
 
-# Define the formatter without microseconds
+# Create a formatter and set the format for the handlers
 formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
 console_handler.setFormatter(formatter)
@@ -39,7 +36,3 @@ file_handler_archive.setFormatter(formatter)
 logger.addHandler(console_handler)
 logger.addHandler(file_handler)
 logger.addHandler(file_handler_archive)
-
-# Clear the contents of file_handler
-# with open("logger.log", "w"):
-#     pass

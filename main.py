@@ -89,8 +89,8 @@ def compute_correlation(dataset_path):
 
 def test():
     # Example usage
-    P = "tiger"
-    Q = "tiger"
+    P = "book"
+    Q = "library"
     similarity_score = web_jaccard_similarity(P, Q)
     result = f"WebJaccard Similarity between '{P}' and '{Q}': {similarity_score}"
     logger.info(result)
