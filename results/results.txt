@@ -8,3 +8,7 @@ Pearson correlation between each given similarity vector and the human annotator
         MC        0.62        0.47      0.52    
         RG        0.55        0.51      0.57    
 WordSim353        0.30        0.29      0.25    
+
+
+   Dataset  WebJaccard  WuPalmer  PathLength   LCH
+webjaccard         1.0      0.11        0.29  0.23

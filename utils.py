@@ -1,3 +1,4 @@
+import math
 import os
 
 import nltk
@@ -36,8 +37,19 @@ def path_length(S1, S2):
     return S1.path_similarity(S2)
 
 
+# Maximum depth of the WordNet taxonomy
+MAX_DEPTH = 20
+
+# Maximum possible LCH similarity score
+MAX_LCH_SCORE = -math.log(1 / (2 * MAX_DEPTH))
+
+
 def lch(S1, S2):
-    return S1.lch_similarity(S2)
+    lch_score = S1.lch_similarity(S2)
+    if lch_score is not None:
+        normalized_lch_score = lch_score / MAX_LCH_SCORE
+        return normalized_lch_score
+    return None
 
 
 def web_jaccard(P, Q):
@@ -162,7 +174,6 @@ def calculate_wordnet_correlations(datasets_dict: dict, column: str = "human_sco
 
             # Read web_jaccard_similarity scores from the .csv file
             web_jaccard = row["web_jaccard"]
-
             wu_palmer = wordnet_similarity(P, Q, 0)
             path_length = wordnet_similarity(P, Q, 1)
             lch = wordnet_similarity(P, Q, 2)
