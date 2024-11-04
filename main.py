@@ -4,7 +4,14 @@ from nltk.corpus import wordnet as wn
 from scipy.stats import pearsonr
 
 from logger_config import logger
-from utils import load_dataset, normalize_dataset_scores, web_jaccard
+from utils import (
+    lch,
+    load_dataset,
+    normalize_dataset_scores,
+    path_length,
+    web_jaccard,
+    wu_palmer,
+)
 
 nltk.download("wordnet")
 nltk.download("averaged_perceptron_tagger_eng")
@@ -15,19 +22,6 @@ datasets = {
     "RG": "datasets/rg.csv",
     "WordSim353": "datasets/wordsim.csv",
 }
-
-
-def wu_palmer(S1, S2):
-    return S1.wup_similarity(S2)
-
-
-def path_length(S1, S2):
-    return S1.path_similarity(S2)
-
-
-def lch(S1, S2):
-    return S1.lch_similarity(S2)
-
 
 # Wordnet similarity models
 models = {

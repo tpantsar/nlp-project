@@ -15,6 +15,18 @@ API_KEY = os.getenv("API_KEY")
 CX = os.getenv("CX")
 
 
+def wu_palmer(S1, S2):
+    return S1.wup_similarity(S2)
+
+
+def path_length(S1, S2):
+    return S1.path_similarity(S2)
+
+
+def lch(S1, S2):
+    return S1.lch_similarity(S2)
+
+
 def web_jaccard(P, Q):
     """WebJaccard similarity function for a word pair P and Q."""
     N11 = get_search_count(f"{P} AND {Q}")
