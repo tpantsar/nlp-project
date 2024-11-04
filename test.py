@@ -4,7 +4,7 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from logger_config import logger
-from utils import web_jaccard
+from utils import web_jaccard, get_snippets
 
 # Load environment variables from .env file
 load_dotenv()
@@ -75,7 +75,10 @@ def test_web_jaccard():
 if __name__ == "__main__":
     output_file = "results/webjaccard_scores_rg.csv"
     dataset = "datasets/rg_normalized.csv"
-    calculate_webjaccard_scores(dataset, output_file)
+    # calculate_webjaccard_scores(dataset, output_file)
+
+    snippets = get_snippets("automobile")
+    logger.info(snippets)
 
     # calculate_wordnet_correlations(
     #     {

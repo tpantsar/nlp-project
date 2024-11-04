@@ -186,6 +186,34 @@ def get_search_count(query):
     return count
 
 
+def get_snippets(query):
+    """Get search snippets for a query using the Google Custom Search API."""
+    url = "https://www.googleapis.com/customsearch/v1"
+    params = {"key": API_KEY, "cx": CX, "q": query}
+    response = requests.get(url, params=params)
+
+    if response.status_code != 200:
+        logger.error(f"Error: {response.json().get('error', {}).get('message')}")
+        return 0
+
+    data = response.json()
+    with open("data.json", "w") as f:
+        json.dump(data, f, indent=4)
+
+    logger.debug(f"Response for query '{query}': {data}")
+
+    try:
+        items = data.get("items", [])
+        snippets = [item.get("snippet") for item in items]
+
+        # Save snippets to a text file
+        with open("snippets.txt", "w") as f:
+            f.write("\n".join(snippets))
+    except KeyError:
+        logger.warning(f"No snippets found for query '{query}'")
+    return snippets
+
+
 def load_dataset(path: str) -> pd.DataFrame:
     """
     Load a dataset from the specified path.
