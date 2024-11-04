@@ -1,0 +1,5 @@
+word1;word2;web_jaccard
+king;queen;0.118
+tiger;tiger;0.82
+book;paper;0.193
+book;library;0.149

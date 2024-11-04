@@ -1,7 +1,16 @@
 import os
 
+import pandas as pd
 import requests
 from dotenv import load_dotenv
+
+from logger_config import logger
+from utils import (
+    get_search_count,
+    normalize_dataset_scores,
+    round_dataset_scores,
+    web_jaccard,
+)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -11,34 +20,64 @@ API_KEY = os.getenv("API_KEY")
 CX = os.getenv("CX")
 
 
-def get_search_count(query):
-    url = "https://www.googleapis.com/customsearch/v1"
-    params = {"key": API_KEY, "cx": CX, "q": query}
-    response = requests.get(url, params=params)
+def calculate_webjaccard_scores(dataset, output_file):
+    # Read the existing webjaccard_scores.csv file
+    if os.path.exists(output_file):
+        existing_scores = pd.read_csv(output_file, delimiter=";")
+    else:
+        existing_scores = pd.DataFrame(columns=["word1", "word2", "web_jaccard"])
 
-    if response.status_code != 200:
-        print(f"Error: {response.json().get('error', {}).get('message')}")
-        return 0
+    # Create a set of existing word pairs to avoid recalculating
+    existing_pairs = set(zip(existing_scores["word1"], existing_scores["word2"]))
 
-    data = response.json()
-    try:
-        count = int(data["searchInformation"]["totalResults"].replace(",", ""))
-    except KeyError:
-        count = 0
-    return count
+    # Read the mc_normalized.csv file
+    mc_data = pd.read_csv(dataset, delimiter=";")
+
+    new_scores = []
+
+    for _, row in mc_data.iterrows():
+        word1, word2 = row["word1"], row["word2"]
+        if (word1, word2) not in existing_pairs and (
+            word2,
+            word1,
+        ) not in existing_pairs:
+            similarity = web_jaccard(word1, word2)
+            if similarity == -1:
+                logger.error(
+                    f"Error occurred while calculating WebJaccard similarity for '{word1}' and '{word2}'"
+                )
+                continue
+
+            # Round the similarity to 3 decimal places
+            similarity = round(similarity, 3)
+
+            new_scores.append(
+                {"word1": word1, "word2": word2, "web_jaccard": similarity}
+            )
+            logger.info(
+                f"Calculated WebJaccard similarity for '{word1}' and '{word2}': {similarity}"
+            )
+
+    # Append new scores to the existing scores
+    if new_scores:
+        new_scores_df = pd.DataFrame(new_scores)
+        updated_scores = pd.concat([existing_scores, new_scores_df], ignore_index=True)
+    else:
+        updated_scores = existing_scores
+
+    # Save the updated scores to the output file
+    updated_scores.to_csv(output_file, index=False, sep=";")
+    logger.info(f"WebJaccard scores saved to '{output_file}'")
 
 
-def web_jaccard_similarity(P, Q):
-    N11 = get_search_count(f"{P} AND {Q}")
-    N10 = get_search_count(f"{P} -{Q}")
-    N01 = get_search_count(f"{Q} -{P}")
+if __name__ == "__main__":
+    dataset = "datasets/mc_normalized.csv"
+    output_file = "results/webjaccard_scores_mc.csv"
+    calculate_webjaccard_scores(dataset, output_file)
 
-    similarity = N11 / (N11 + N10 + N01) if (N11 + N10 + N01) > 0 else 0
-    return similarity
-
-
-# Example usage
-P = "apple"
-Q = "fruit"
-similarity_score = web_jaccard_similarity(P, Q)
-print(f"WebJaccard Similarity between '{P}' and '{Q}': {similarity_score}")
+    # round_dataset_scores(
+    #    {
+    #        "webjaccard": output_file,
+    #    },
+    #    column="web_jaccard",
+    # )
