@@ -73,7 +73,7 @@ def test_web_jaccard():
 
 
 if __name__ == "__main__":
-    output_file = "results/webjaccard_scores_mc.csv"
+    output_file = "results/webjaccard_scores_rg.csv"
     dataset = "datasets/rg_normalized.csv"
     calculate_webjaccard_scores(dataset, output_file)
 
