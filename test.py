@@ -1,16 +1,10 @@
 import os
 
 import pandas as pd
-import requests
 from dotenv import load_dotenv
 
 from logger_config import logger
-from utils import (
-    get_search_count,
-    normalize_dataset_scores,
-    round_dataset_scores,
-    web_jaccard,
-)
+from utils import calculate_wordnet_correlations, web_jaccard
 
 # Load environment variables from .env file
 load_dotenv()
@@ -71,9 +65,16 @@ def calculate_webjaccard_scores(dataset, output_file):
 
 
 if __name__ == "__main__":
-    dataset = "datasets/mc_normalized.csv"
     output_file = "results/webjaccard_scores_mc.csv"
-    calculate_webjaccard_scores(dataset, output_file)
+    # dataset = "datasets/mc_normalized.csv"
+    # calculate_webjaccard_scores(dataset, output_file)
+
+    calculate_wordnet_correlations(
+        {
+            "webjaccard": output_file,
+        },
+        column="web_jaccard",
+    )
 
     # round_dataset_scores(
     #    {
