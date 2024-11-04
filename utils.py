@@ -162,10 +162,10 @@ def round_dataset_scores(
             logger.error("Error rounding similarity scores in the dataset")
 
 
-def calculate_wordnet_correlations(datasets_dict: dict, column: str = "human_score"):
+def calculate_wordnet_correlations(datasets: dict, column: str = "human_score"):
     # Compute and print correlations for each dataset
     results = []
-    for name, path in datasets_dict.items():
+    for name, path in datasets.items():
         df = pd.read_csv(path, delimiter=";")
         web_jaccard_scores = []
         wu_palmer_scores = []
@@ -211,9 +211,6 @@ def calculate_wordnet_correlations(datasets_dict: dict, column: str = "human_sco
         logger.info(
             f"Pearson correlation for {name} - WebJaccard: {web_jaccard_corr:.2f}, WuPalmer: {wu_palmer_corr:.2f}, PathLength: {path_length_corr:.2f}, LCH: {lch_corr:.2f}"
         )
-        # logger.info(
-        #    f"Pearson correlation for {name} - WuPalmer: {wu_palmer_corr:.2f}, PathLength: {path_length_corr:.2f}, LCH: {lch_corr:.2f}"
-        # )
 
     # Summarize results in a table
     results_df = pd.DataFrame(results).round(2)

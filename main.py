@@ -63,8 +63,8 @@ def calculate_correlations():
 
 
 def main():
-    normalize_dataset_scores(datasets=datasets)
-    calculate_wordnet_correlations(datasets=datasets)
+    normalize_dataset_scores(datasets)
+    calculate_wordnet_correlations(datasets)
     # test()
     # calculate_correlations()
 

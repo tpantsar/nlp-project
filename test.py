@@ -64,17 +64,25 @@ def calculate_webjaccard_scores(dataset, output_file):
     logger.info(f"WebJaccard scores saved to '{output_file}'")
 
 
+def test_web_jaccard():
+    P = "automobile"
+    Q = "car"
+    similarity_score = web_jaccard(P, Q)
+    result = f"WebJaccard Similarity between '{P}' and '{Q}': {similarity_score}"
+    logger.info(result)
+
+
 if __name__ == "__main__":
     output_file = "results/webjaccard_scores_mc.csv"
-    # dataset = "datasets/mc_normalized.csv"
-    # calculate_webjaccard_scores(dataset, output_file)
+    dataset = "datasets/rg_normalized.csv"
+    calculate_webjaccard_scores(dataset, output_file)
 
-    calculate_wordnet_correlations(
-        {
-            "webjaccard": output_file,
-        },
-        column="web_jaccard",
-    )
+    # calculate_wordnet_correlations(
+    #     {
+    #         "webjaccard": output_file,
+    #     },
+    #     column="web_jaccard",
+    # )
 
     # round_dataset_scores(
     #    {
@@ -83,10 +91,4 @@ if __name__ == "__main__":
     #    column="web_jaccard",
     # )
 
-    word1 = "automobile"
-    word2 = "car"
-
-    similarity_score = web_jaccard(word1, word2)
-    logger.info(
-        f"WebJaccard similarity between '{word1}' and '{word2}': {similarity_score}"
-    )
+    # test_web_jaccard()
