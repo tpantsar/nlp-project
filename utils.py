@@ -206,9 +206,11 @@ def get_snippets(query):
         items = data.get("items", [])
         snippets = [item.get("snippet") for item in items]
 
-        # Save snippets to a text file
-        with open("snippets.txt", "w") as f:
+        # Append snippets to a text file
+        with open("snippets.txt", "a") as f:
+            f.write(f"Query: {query}\n")
             f.write("\n".join(snippets))
+            f.write("\n\n")
     except KeyError:
         logger.warning(f"No snippets found for query '{query}'")
     return snippets
