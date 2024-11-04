@@ -24,9 +24,9 @@ CX = os.getenv("CX")
 
 # Paths to datasets
 datasets = {
-    "MC": "datasets/mc.csv",
-    "RG": "datasets/rg.csv",
-    "WordSim353": "datasets/wordsim.csv",
+    "MC": "datasets/mc_normalized_test.csv",
+    "RG": "datasets/rg_normalized_test.csv",
+    "WordSim353": "datasets/wordsim_normalized_test.csv",
 }
 
 
@@ -162,27 +162,24 @@ def round_dataset_scores(
             logger.error("Error rounding similarity scores in the dataset")
 
 
-def calculate_wordnet_correlations(datasets: dict, column: str = "human_score"):
+def calculate_wordnet_correlations(datasets: dict):
     # Compute and print correlations for each dataset
     results = []
     for name, path in datasets.items():
         df = pd.read_csv(path, delimiter=";")
-        web_jaccard_scores = []
         wu_palmer_scores = []
         path_length_scores = []
         lch_scores = []
-        human_scores = df[column].values
+        web_jaccard_scores = df["web_jaccard_score"].values
+        human_scores = df["human_score"].values
 
         for _, row in df.iterrows():
             P, Q = row["word1"], row["word2"]
 
-            # Read web_jaccard_similarity scores from the .csv file
-            web_jaccard = row["web_jaccard"]
             wu_palmer = wordnet_similarity(P, Q, 0)
             path_length = wordnet_similarity(P, Q, 1)
             lch = wordnet_similarity(P, Q, 2)
 
-            web_jaccard_scores.append(web_jaccard)
             wu_palmer_scores.append(wu_palmer)
             path_length_scores.append(path_length)
             lch_scores.append(lch)
