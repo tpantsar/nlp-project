@@ -4,7 +4,7 @@ Pearson correlation for WordSim353 - WuPalmer: 0.30, PathLength: 0.29, LCH: 0.25
 
 Pearson correlation between each given similarity vector and the human annotator data:
 
-   Dataset  WebJaccard  WuPalmer  PathLength    LCH
-        MC        0.26      0.62        0.47   0.52
-        RG        0.34      0.23        0.25   0.24
-WordSim353        0.52      0.40        0.38   0.47
+   Dataset  WebJaccard  WuPalmer  PathLength   LCH  Word2Vec  FastText  Glove  DistilBERT
+        MC        0.26      0.62        0.47  0.52      0.21       0.3   0.24        0.52
+        RG        0.34      0.23        0.25  0.24      0.08       0.0   0.01        0.26
+WordSim353        0.52      0.40        0.38  0.47      0.00       0.1   0.12        0.49

@@ -1,22 +1,12 @@
-import nltk
-import pandas as pd
-from nltk.corpus import wordnet as wn
 from scipy.stats import pearsonr
 
 from logger_config import logger
 from utils import (
     calculate_wordnet_correlations,
     datasets,
-    lch,
     load_dataset,
-    normalize_dataset_scores,
-    path_length,
     web_jaccard,
-    wu_palmer,
 )
-
-nltk.download("wordnet")
-nltk.download("averaged_perceptron_tagger_eng")
 
 
 def compute_correlation(dataset_path):

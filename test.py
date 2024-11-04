@@ -4,7 +4,7 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from logger_config import logger
-from utils import calculate_wordnet_correlations, web_jaccard
+from utils import web_jaccard
 
 # Load environment variables from .env file
 load_dotenv()
