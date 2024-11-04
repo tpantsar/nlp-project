@@ -77,7 +77,12 @@ if __name__ == "__main__":
     dataset = "datasets/rg_normalized.csv"
     # calculate_webjaccard_scores(dataset, output_file)
 
-    snippets = get_snippets("automobile")
+    snippets = get_snippets("love")
+    snippets = get_snippets("hate")
+    snippets = get_snippets("pollution")
+    snippets = get_snippets("eco-friendly")
+    snippets = get_snippets("sustainable")
+    snippets = get_snippets("unsustainable")
     logger.info(snippets)
 
     # calculate_wordnet_correlations(
