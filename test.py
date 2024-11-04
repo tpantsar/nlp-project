@@ -82,3 +82,11 @@ if __name__ == "__main__":
     #    },
     #    column="web_jaccard",
     # )
+
+    word1 = "automobile"
+    word2 = "car"
+
+    similarity_score = web_jaccard(word1, word2)
+    logger.info(
+        f"WebJaccard similarity between '{word1}' and '{word2}': {similarity_score}"
+    )

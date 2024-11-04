@@ -1,3 +1,4 @@
+import json
 import math
 import os
 
@@ -85,6 +86,9 @@ def get_search_count(query):
         return 0
 
     data = response.json()
+    with open("data.json", "w") as f:
+        json.dump(data, f, indent=4)
+
     logger.debug(f"Response for query '{query}': {data}")
     # Check if search information is present in the response
     try:
