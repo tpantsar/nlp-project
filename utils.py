@@ -2,6 +2,7 @@ import json
 import math
 import os
 from transformers import DistilBertModel, DistilBertTokenizer
+import gensim
 import torch
 import nltk
 import gensim.downloader as api
@@ -103,27 +104,41 @@ def glove(S1, S2):
 
 def distilbert(S1, S2):
     """DistilBERT similarity."""
-    return similarity_model(distilbert_model, S1.definition(), S2.definition(), model_type='distilbert')
+    return distilbert_similarity(S1.definition(), S2.definition())
 
 
-def similarity_model(model, str1, str2, model_type='gensim'):
+def similarity_model(model, str1, str2):
     def get_vector(sentence):
         words = word_tokenize(sentence.lower())
-        if model_type == 'gensim':
+        if isinstance(model, gensim.models.KeyedVectors):
             words = [word for word in words if word in model]
             if not words:
                 return np.zeros(model.vector_size)
             return np.mean([model[word] for word in words], axis=0)
-        elif model_type == 'distilbert':
-            inputs = tokenizer(sentence, return_tensors='pt')
-            outputs = model(**inputs)
-            return outputs.last_hidden_state.mean(dim=1).detach().numpy().flatten()
         else:
-            raise ValueError("Unsupported model type")
+            words = [word for word in words if word in model.wv]
+            if not words:
+                return np.zeros(model.vector_size)
+            return np.mean([model.wv[word] for word in words], axis=0)
 
     vec1 = get_vector(str1)
     vec2 = get_vector(str2)
     return cosine_similarity([vec1], [vec2])[0][0]
+
+
+def distilbert_similarity(sentence1, sentence2):
+    # Tokenize sentences
+    inputs1 = tokenizer(sentence1, return_tensors="pt", padding=True, truncation=True)
+    inputs2 = tokenizer(sentence2, return_tensors="pt", padding=True, truncation=True)
+    
+    # Generate embeddings
+    with torch.no_grad():
+        outputs1 = distilbert_model(**inputs1).last_hidden_state.mean(dim=1)  # Mean pooling over tokens for sentence embedding
+        outputs2 = distilbert_model(**inputs2).last_hidden_state.mean(dim=1)
+
+    # Calculate cosine similarity
+    similarity = cosine_similarity(outputs1, outputs2).item()
+    return similarity
 
 
 # Maximum depth of the WordNet taxonomy
@@ -169,6 +184,34 @@ def get_search_count(query):
         count = 0
         logger.warning(f"No results found for query '{query}'")
     return count
+
+
+def get_snippets(query):
+    """Get search snippets for a query using the Google Custom Search API."""
+    url = "https://www.googleapis.com/customsearch/v1"
+    params = {"key": API_KEY, "cx": CX, "q": query}
+    response = requests.get(url, params=params)
+
+    if response.status_code != 200:
+        logger.error(f"Error: {response.json().get('error', {}).get('message')}")
+        return 0
+
+    data = response.json()
+    with open("data.json", "w") as f:
+        json.dump(data, f, indent=4)
+
+    logger.debug(f"Response for query '{query}': {data}")
+
+    try:
+        items = data.get("items", [])
+        snippets = [item.get("snippet") for item in items]
+
+        # Save snippets to a text file
+        with open("snippets.txt", "w") as f:
+            f.write("\n".join(snippets))
+    except KeyError:
+        logger.warning(f"No snippets found for query '{query}'")
+    return snippets
 
 
 def load_dataset(path: str) -> pd.DataFrame:
