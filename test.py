@@ -4,7 +4,7 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from logger_config import logger
-from utils import web_jaccard, get_snippets
+from utils import web_jaccard, get_snippets, pre_process, snippet_similarity, fuzzywuzzy
 
 # Load environment variables from .env file
 load_dotenv()
@@ -72,18 +72,96 @@ def test_web_jaccard():
     logger.info(result)
 
 
-if __name__ == "__main__":
-    output_file = "results/webjaccard_scores_rg.csv"
-    dataset = "datasets/rg_normalized.csv"
-    # calculate_webjaccard_scores(dataset, output_file)
+def test_snippet_similarity(word1, word2):
+    snippets = get_snippets(word1)
+    # Get first five snippets
+    snippets = snippets[:5]
+    # Concatenate the snippets
+    snippets = " ".join(snippets)
 
-    snippets = get_snippets("love")
-    snippets = get_snippets("hate")
-    snippets = get_snippets("pollution")
-    snippets = get_snippets("eco-friendly")
-    snippets = get_snippets("sustainable")
-    snippets = get_snippets("unsustainable")
-    logger.info(snippets)
+    # Pre-process the snippets
+    snippet_1 = pre_process(snippets)
+    logger.info(f"{word1} snippets: {snippet_1}")
+
+    snippets = get_snippets(word2)
+    # Get first five snippets
+    snippets = snippets[:5]
+    # Concatenate the snippets
+    snippets = " ".join(snippets)
+
+    # Pre-process the snippets
+    snippet_2 = pre_process(snippets)
+    logger.info(f"{word2} snippets: {snippet_2}")
+
+    similarity = snippet_similarity(snippet_1, snippet_2)
+    logger.info(f"Snippet similarity for {word1} and {word2}: {similarity}")
+
+    # Append results to a file
+    with open("results/snippet_similarity_rg.txt", "a", encoding="utf-8") as file:
+        file.write(f"{word1},{word2},{similarity}\n")
+
+
+def test_fuzzywuzzy(word1, word2):
+    snippets = get_snippets(word1)
+    snippets = " ".join(snippets)
+    snippet1_preprocessed = pre_process(snippets)
+    logger.info(f"{word1} snippets: {snippet1_preprocessed}")
+
+    snippets = get_snippets(word2)
+    snippets = " ".join(snippets)
+    snippet2_preprocessed = pre_process(snippets)
+    logger.info(f"{word2} snippets: {snippet2_preprocessed}")
+
+    similarity = fuzzywuzzy(snippet1_preprocessed, snippet2_preprocessed)
+    result = f"FuzzyWuzzy Similarity between '{word1}' and '{word2}': {similarity}"
+    logger.info(result)
+
+    # Append results to a file
+    with open("results/fuzzywuzzy_scores_wordsim.txt", "a", encoding="utf-8") as file:
+        file.write(f"{word1},{word2},{similarity}\n")
+
+
+def calculate_fuzzywuzzy_scores():
+    for name, path in datasets.items():
+        df = pd.read_csv(path, delimiter=";")
+        for _, row in df.iterrows():
+            word1, word2 = row["word1"], row["word2"]
+            test_fuzzywuzzy(word1, word2)
+
+
+def calculate_snippet_scores():
+    for name, path in datasets.items():
+        df = pd.read_csv(path, delimiter=";")
+        for _, row in df.iterrows():
+            word1, word2 = row["word1"], row["word2"]
+            test_snippet_similarity(word1, word2)
+
+
+if __name__ == "__main__":
+    #output_file = "results/webjaccard_scores_rg.csv"
+    #dataset = "datasets/rg_normalized.csv"
+    #calculate_webjaccard_scores(dataset, output_file)
+
+    # snippets = get_snippets("love")
+    # snippets = get_snippets("hate")
+    # snippets = get_snippets("pollution")
+    # snippets = get_snippets("eco-friendly")
+    # snippets = get_snippets("sustainable")
+    # snippets = get_snippets("unsustainable")
+    # logger.info(snippets)
+
+    datasets = {
+        "mc": "datasets/mc_normalized_test.csv",
+        #"rg": "datasets/rg_normalized_test.csv",
+        #"ws": "datasets/wordsim_normalized_test.csv",
+    }
+
+    # calculate_snippet_scores()
+
+    # TODO: calculate pearson correlation for the following datasets
+    calculate_fuzzywuzzy_scores()
+
+
 
     # calculate_wordnet_correlations(
     #     {

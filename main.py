@@ -3,6 +3,7 @@ from scipy.stats import pearsonr
 from logger_config import logger
 from utils import (
     calculate_wordnet_correlations,
+    fuzzywuzzy,
     datasets,
     load_dataset,
     web_jaccard,
@@ -54,10 +55,22 @@ def calculate_correlations():
 
 def main():
     # normalize_dataset_scores(datasets)
-    calculate_wordnet_correlations(datasets)
+    # calculate_wordnet_correlations(datasets)
     # test()
     # calculate_correlations()
 
+    documents = [
+        ("documents/love.txt", "documents/hate.txt"),
+        ("documents/pollution.txt", "documents/ecofriendly.txt"),
+        ("documents/sustainable.txt", "documents/unsustainable.txt")
+    ]
+
+    # Summarize the result of the three double queries in a table.
+    for doc1, doc2 in documents:
+        snippet1 = open(doc1).read()
+        snippet2 = open(doc2).read()
+        overlap_percentage = fuzzywuzzy(snippet1, snippet2)
+        logger.info(f"Snippet overlap between '{doc1}' and '{doc2}': {overlap_percentage:.2f}")        
 
 if __name__ == "__main__":
     main()

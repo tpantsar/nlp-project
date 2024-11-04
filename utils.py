@@ -9,8 +9,10 @@ import gensim.downloader as api
 import numpy as np
 import pandas as pd
 import requests
+from fuzzywuzzy import fuzz
 from gensim.models import FastText, Word2Vec
 from dotenv import load_dotenv
+from nltk import WordNetLemmatizer
 from nltk.corpus import abc, brown
 from nltk.corpus import wordnet as wn
 from nltk.tokenize import word_tokenize
@@ -20,12 +22,17 @@ from sklearn.preprocessing import MinMaxScaler
 
 from logger_config import logger
 
-nltk.download("abc")
-nltk.download("punkt")
-nltk.download('punkt_tab')
-nltk.download("brown")
-nltk.download("wordnet")
-nltk.download("averaged_perceptron_tagger_eng")
+# nltk.download("abc")
+# nltk.download("punkt")
+# nltk.download('punkt_tab')
+# nltk.download("brown")
+# nltk.download("wordnet")
+# nltk.download("averaged_perceptron_tagger_eng")
+nltk.download("stopwords")
+
+# TODO: Uncomment
+tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
+distilbert_model = DistilBertModel.from_pretrained("distilbert-base-uncased", torch_dtype=torch.float16, attn_implementation="eager")
 
 # Load environment variables from .env file
 load_dotenv()
@@ -54,9 +61,6 @@ word2vec_model = Word2Vec(
 fasttext_model = FastText(
     brown_sentences, vector_size=100, window=5, min_count=1, epochs=10
 )
-
-tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
-distilbert_model = DistilBertModel.from_pretrained("distilbert-base-uncased", torch_dtype=torch.float16, attn_implementation="eager")
 
 def wu_palmer(S1, S2):
     return S1.wup_similarity(S2)
@@ -87,6 +91,42 @@ def web_jaccard(P, Q):
     return similarity
 
 
+def snippet_similarity(snippet1, snippet2):
+    """WebJaccard similarity function for a word pair P and Q."""
+    # Calculate the ratio of the common words between the five snippets of P and the five snippets of Q
+    # over the total number of distinct words of all the ten snippets
+
+    # Get common words between the two snippets
+    common_words = set(snippet1).intersection(snippet2)
+    logger.info(f"Common words: {common_words}")
+    # Get all distinct words from both snippets
+    all_words = set(snippet1).union(snippet2)
+    logger.info(f"All words: {all_words}")
+
+    similarity = len(common_words) / len(all_words) if len(all_words) > 0 else 0
+
+    return similarity
+    
+
+def fuzzywuzzy(snippet1, snippet2):
+    """
+    FuzzyWuzzy similarity, accounts only for string matching.
+    Calculate the number of shared snippets and the percentage of overlapping between two sets of snippets.
+    """
+    # Concatenate the documents into strings
+    D1 = " ".join(snippet1)
+    D2 = " ".join(snippet2)
+
+    # Preprocess the documents
+    D1 = pre_process(D1)
+    D2 = pre_process(D2)
+
+    # Calculate the percentage of overlapping using fuzzy-string matching
+    overlap_percentage = fuzz.ratio(D1, D2) / 100
+
+    return overlap_percentage
+
+
 def word2vec(S1, S2):
     """Word2Vec similarity."""
     return similarity_model(word2vec_model, S1.definition(), S2.definition())
@@ -105,6 +145,26 @@ def glove(S1, S2):
 def distilbert(S1, S2):
     """DistilBERT similarity."""
     return distilbert_similarity(S1.definition(), S2.definition())
+
+
+def pre_process(sentence):
+    """Tokenize, remove stopwords, and clean the sentence."""
+    stop_words = list(set(nltk.corpus.stopwords.words("english")))
+    lemmatizer = WordNetLemmatizer()
+    tokens = word_tokenize(sentence)
+
+    filtered_tokens = [
+        lemmatizer.lemmatize(word) for word in tokens if word.lower() not in stop_words
+    ]
+
+    tokens = [
+        word.lower() for word in filtered_tokens if word.isalpha() and word not in stop_words
+    ]  # Get rid of numbers and stopwords
+
+    # Remove duplicate tokens
+    tokens = list(set(tokens))
+
+    return tokens
 
 
 def similarity_model(model, str1, str2):
@@ -158,6 +218,8 @@ models = {
     5: fasttext,
     6: glove,
     7: distilbert,
+    8: snippet_similarity,
+    9: fuzzywuzzy,
 }
 
 
@@ -207,7 +269,7 @@ def get_snippets(query):
         snippets = [item.get("snippet") for item in items]
 
         # Append snippets to a text file
-        with open("snippets.txt", "a") as f:
+        with open("snippets.txt", "a", encoding="utf-8") as f:
             f.write(f"Query: {query}\n")
             f.write("\n".join(snippets))
             f.write("\n\n")
@@ -285,6 +347,8 @@ def calculate_wordnet_correlations(datasets: dict):
         df = pd.read_csv(path, delimiter=";")
         web_jaccard_scores = df["web_jaccard_score"].values
         human_scores = df["human_score"].values
+        snippet_scores_1 = df["snippet_score1"].values
+        snippet_scores_2 = df["snippet_score2"].values
         wu_palmer_scores = []
         path_length_scores = []
         lch_scores = []
@@ -312,7 +376,6 @@ def calculate_wordnet_correlations(datasets: dict):
             glove_scores.append(glove)
             distilbert_scores.append(distilbert)
 
-
         df["web_jaccard_similarity"] = web_jaccard_scores
         df["wu_palmer_similarity"] = wu_palmer_scores
         df["path_length_similarity"] = path_length_scores
@@ -321,6 +384,7 @@ def calculate_wordnet_correlations(datasets: dict):
         df["fasttext_similarity"] = fasttext_scores
         df["glove_similarity"] = glove_scores
         df["distilbert_similarity"] = distilbert_scores
+        df["snippet_similarity"] = snippet_scores_1
 
         # Calculate Pearson correlations
         web_jaccard_corr, _ = pearsonr(df["web_jaccard_similarity"], human_scores)
@@ -331,6 +395,7 @@ def calculate_wordnet_correlations(datasets: dict):
         fasttext_corr, _ = pearsonr(df["fasttext_similarity"], human_scores)
         glove_corr, _ = pearsonr(df["glove_similarity"], human_scores)
         distilbert_corr, _ = pearsonr(df["distilbert_similarity"], human_scores)
+        snippet_corr, _ = pearsonr(df["snippet_similarity"], human_scores)
 
         results.append(
             {
@@ -343,11 +408,12 @@ def calculate_wordnet_correlations(datasets: dict):
                 "FastText": fasttext_corr,
                 "Glove": glove_corr,
                 "DistilBERT": distilbert_corr,
+                "Snippet": snippet_corr,
             }
         )
 
         logger.info(
-            f"Pearson correlation for {name} - WebJaccard: {web_jaccard_corr:.2f}, WuPalmer: {wu_palmer_corr:.2f}, PathLength: {path_length_corr:.2f}, LCH: {lch_corr:.2f}, Word2Vec: {word2vec_corr:.2f}, FastText: {fasttext_corr:.2f}, Glove: {glove_corr:.2f}, DistilBERT: {distilbert_corr:.2f}"
+            f"Pearson correlation for {name} - WebJaccard: {web_jaccard_corr:.2f}, WuPalmer: {wu_palmer_corr:.2f}, PathLength: {path_length_corr:.2f}, LCH: {lch_corr:.2f}, Word2Vec: {word2vec_corr:.2f}, FastText: {fasttext_corr:.2f}, Glove: {glove_corr:.2f}, DistilBERT: {distilbert_corr:.2f}, Snippet: {snippet_corr:.2f}"
         )
 
     # Summarize results in a table
