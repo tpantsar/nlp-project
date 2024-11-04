@@ -1,0 +1,18 @@
+WebJaccard Similarity between 'monk' and 'oracle': 0.002704139413409758
+WebJaccard Similarity between 'king' and 'queen': 0.11802685950413223
+WebJaccard Similarity between 'tiger' and 'tiger': 0.8200290275761973
+WebJaccard Similarity between 'book' and 'paper': 0.19291553133514985
+WebJaccard Similarity between 'book' and 'library': 0.1494186046511628
+
+
+
+Pearson correlation for MC - WuPalmer: 0.62, PathLength: 0.47, LCH: 0.52
+Pearson correlation for RG - WuPalmer: 0.55, PathLength: 0.51, LCH: 0.57
+Pearson correlation for WordSim353 - WuPalmer: 0.30, PathLength: 0.29, LCH: 0.25
+
+Pearson correlation between each given similarity vector and the human annotator data:
+
+   Dataset    WuPalmer  PathLength       LCH
+        MC        0.62        0.47      0.52    
+        RG        0.55        0.51      0.57    
+WordSim353        0.30        0.29      0.25    

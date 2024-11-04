@@ -4,6 +4,10 @@ Project work for Natural Language Processing and Text Mining course 2024.
 
 This project aims to investigate the similarity between two phrases using internet search results only.
 
+WebJaccard similarity is a measure used in natural language processing (NLP) to quantify the similarity between two sets of web search results.
+It is based on the Jaccard similarity coefficient, which is a statistical measure of the similarity between two sets.
+The WebJaccard similarity specifically leverages web search engines to determine the overlap between the sets of web pages returned for two different queries.
+
 ## Add these variables to the .env file:
 
 ```
