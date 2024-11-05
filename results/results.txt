@@ -1,7 +1,3 @@
-Pearson correlation for MC - WuPalmer: 0.62, PathLength: 0.47, LCH: 0.52
-Pearson correlation for RG - WuPalmer: 0.55, PathLength: 0.51, LCH: 0.57
-Pearson correlation for WordSim353 - WuPalmer: 0.30, PathLength: 0.29, LCH: 0.25
-
 Pearson correlation between each given similarity vector and the human annotator data:
 
    Dataset  WebJaccard  WuPalmer  PathLength   LCH  Word2Vec  FastText  Glove  DistilBERT   Snippets    FuzzyWuzzy
