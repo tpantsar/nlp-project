@@ -4,10 +4,10 @@ Pearson correlation for WordSim353 - WuPalmer: 0.30, PathLength: 0.29, LCH: 0.25
 
 Pearson correlation between each given similarity vector and the human annotator data:
 
-   Dataset  WebJaccard  WuPalmer  PathLength   LCH  Word2Vec  FastText  Glove  DistilBERT   Snippets
-        MC        0.26      0.62        0.47  0.52      0.21       0.3   0.24        0.52       0.17
-        RG        0.34      0.23        0.25  0.24      0.08       0.0   0.01        0.26       0.08
-WordSim353        0.52      0.40        0.38  0.47      0.00       0.1   0.12        0.49          ?
+   Dataset  WebJaccard  WuPalmer  PathLength   LCH  Word2Vec  FastText  Glove  DistilBERT   Snippets    FuzzyWuzzy
+        MC        0.26      0.62        0.47  0.52      0.21       0.3   0.24        0.52       0.17          0.40
+        RG        0.34      0.23        0.25  0.24      0.08       0.0   0.01        0.26       0.08          0.00
+WordSim353        0.52      0.40        0.38  0.47      0.00       0.1   0.12        0.49          ?             ?
 
 
 Snippet overlap between 'documents/love.txt' and 'documents/hate.txt': 71.00

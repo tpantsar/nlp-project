@@ -1,17 +1,17 @@
 import json
 import math
 import os
-from transformers import DistilBertModel, DistilBertTokenizer
+
 import gensim
-import torch
-import nltk
 import gensim.downloader as api
+import nltk
 import numpy as np
 import pandas as pd
 import requests
+import torch
+from dotenv import load_dotenv
 from fuzzywuzzy import fuzz
 from gensim.models import FastText, Word2Vec
-from dotenv import load_dotenv
 from nltk import WordNetLemmatizer
 from nltk.corpus import abc, brown
 from nltk.corpus import wordnet as wn
@@ -19,20 +19,22 @@ from nltk.tokenize import word_tokenize
 from scipy.stats import pearsonr
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import MinMaxScaler
+from transformers import DistilBertModel, DistilBertTokenizer
 
 from logger_config import logger
 
-# nltk.download("abc")
-# nltk.download("punkt")
-# nltk.download('punkt_tab')
-# nltk.download("brown")
-# nltk.download("wordnet")
-# nltk.download("averaged_perceptron_tagger_eng")
+nltk.download("abc")
+nltk.download("punkt")
+nltk.download("punkt_tab")
+nltk.download("brown")
+nltk.download("wordnet")
+nltk.download("averaged_perceptron_tagger_eng")
 nltk.download("stopwords")
 
-# TODO: Uncomment
 tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
-distilbert_model = DistilBertModel.from_pretrained("distilbert-base-uncased", torch_dtype=torch.float16, attn_implementation="eager")
+distilbert_model = DistilBertModel.from_pretrained(
+    "distilbert-base-uncased", torch_dtype=torch.float16, attn_implementation="eager"
+)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -45,7 +47,7 @@ CX = os.getenv("CX")
 datasets = {
     "MC": "datasets/mc_normalized_test.csv",
     "RG": "datasets/rg_normalized_test.csv",
-    "WordSim353": "datasets/wordsim_normalized_test.csv",
+    # "WordSim353": "datasets/wordsim_normalized_test.csv",
 }
 
 abc_sentences = abc.sents()
@@ -61,6 +63,7 @@ word2vec_model = Word2Vec(
 fasttext_model = FastText(
     brown_sentences, vector_size=100, window=5, min_count=1, epochs=10
 )
+
 
 def wu_palmer(S1, S2):
     return S1.wup_similarity(S2)
@@ -106,7 +109,7 @@ def snippet_similarity(snippet1, snippet2):
     similarity = len(common_words) / len(all_words) if len(all_words) > 0 else 0
 
     return similarity
-    
+
 
 def fuzzywuzzy(snippet1, snippet2):
     """
@@ -158,7 +161,9 @@ def pre_process(sentence):
     ]
 
     tokens = [
-        word.lower() for word in filtered_tokens if word.isalpha() and word not in stop_words
+        word.lower()
+        for word in filtered_tokens
+        if word.isalpha() and word not in stop_words
     ]  # Get rid of numbers and stopwords
 
     # Remove duplicate tokens
@@ -190,10 +195,12 @@ def distilbert_similarity(sentence1, sentence2):
     # Tokenize sentences
     inputs1 = tokenizer(sentence1, return_tensors="pt", padding=True, truncation=True)
     inputs2 = tokenizer(sentence2, return_tensors="pt", padding=True, truncation=True)
-    
+
     # Generate embeddings
     with torch.no_grad():
-        outputs1 = distilbert_model(**inputs1).last_hidden_state.mean(dim=1)  # Mean pooling over tokens for sentence embedding
+        outputs1 = distilbert_model(**inputs1).last_hidden_state.mean(
+            dim=1
+        )  # Mean pooling over tokens for sentence embedding
         outputs2 = distilbert_model(**inputs2).last_hidden_state.mean(dim=1)
 
     # Calculate cosine similarity
@@ -347,8 +354,8 @@ def calculate_wordnet_correlations(datasets: dict):
         df = pd.read_csv(path, delimiter=";")
         web_jaccard_scores = df["web_jaccard_score"].values
         human_scores = df["human_score"].values
-        snippet_scores_1 = df["snippet_score1"].values
-        snippet_scores_2 = df["snippet_score2"].values
+        snippet_scores = df["snippet_similarity"].values
+        fuzzywuzzy_scores = df["fuzzywuzzy_similarity"].values
         wu_palmer_scores = []
         path_length_scores = []
         lch_scores = []
@@ -384,7 +391,8 @@ def calculate_wordnet_correlations(datasets: dict):
         df["fasttext_similarity"] = fasttext_scores
         df["glove_similarity"] = glove_scores
         df["distilbert_similarity"] = distilbert_scores
-        df["snippet_similarity"] = snippet_scores_1
+        df["snippet_similarity"] = snippet_scores
+        df["fuzzywuzzy_similarity"] = fuzzywuzzy_scores
 
         # Calculate Pearson correlations
         web_jaccard_corr, _ = pearsonr(df["web_jaccard_similarity"], human_scores)
@@ -396,6 +404,7 @@ def calculate_wordnet_correlations(datasets: dict):
         glove_corr, _ = pearsonr(df["glove_similarity"], human_scores)
         distilbert_corr, _ = pearsonr(df["distilbert_similarity"], human_scores)
         snippet_corr, _ = pearsonr(df["snippet_similarity"], human_scores)
+        fuzzywuzzy_corr, _ = pearsonr(df["fuzzywuzzy_similarity"], human_scores)
 
         results.append(
             {
@@ -409,11 +418,12 @@ def calculate_wordnet_correlations(datasets: dict):
                 "Glove": glove_corr,
                 "DistilBERT": distilbert_corr,
                 "Snippet": snippet_corr,
+                "FuzzyWuzzy": fuzzywuzzy_corr,
             }
         )
 
         logger.info(
-            f"Pearson correlation for {name} - WebJaccard: {web_jaccard_corr:.2f}, WuPalmer: {wu_palmer_corr:.2f}, PathLength: {path_length_corr:.2f}, LCH: {lch_corr:.2f}, Word2Vec: {word2vec_corr:.2f}, FastText: {fasttext_corr:.2f}, Glove: {glove_corr:.2f}, DistilBERT: {distilbert_corr:.2f}, Snippet: {snippet_corr:.2f}"
+            f"Pearson correlation for {name} - WebJaccard: {web_jaccard_corr:.2f}, WuPalmer: {wu_palmer_corr:.2f}, PathLength: {path_length_corr:.2f}, LCH: {lch_corr:.2f}, Word2Vec: {word2vec_corr:.2f}, FastText: {fasttext_corr:.2f}, Glove: {glove_corr:.2f}, DistilBERT: {distilbert_corr:.2f}, Snippet: {snippet_corr:.2f}, FuzzyWuzzy: {fuzzywuzzy_corr:.2f}"
         )
 
     # Summarize results in a table
