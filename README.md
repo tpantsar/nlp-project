@@ -11,7 +11,7 @@ The WebJaccard similarity specifically leverages web search engines to determine
 ## Add these variables to the .env file:
 
 ```
-API_KEY=your_google_api_key (The API key for the Google Custom Search API)
+API_KEYS=key1,key2,key3 (List of API keys for the Google Custom Search API)
 CX=your_google_cx (The identifier of the Programmable Search Engine)
 ```
 
@@ -32,6 +32,12 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+```
+
+## Run:
+
+```
+python main.py
 ```
 
 datasets/ directory contains three standard human judgments datasets used in the project to calculate the similarity between two phrases.<br>

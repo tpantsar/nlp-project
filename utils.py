@@ -40,14 +40,19 @@ distilbert_model = DistilBertModel.from_pretrained(
 load_dotenv()
 
 # Access Google API key and Search Engine ID
-API_KEY = os.getenv("API_KEY")
+API_KEYS = os.getenv("API_KEYS").split(",")
 CX = os.getenv("CX")
+
+logger.debug(f"API keys found: {len(API_KEYS)}")
+
+# Initialize the index for the current API key
+current_api_key_index = 0
 
 # Paths to datasets
 datasets = {
-    "MC": "datasets/mc_normalized_test.csv",
-    "RG": "datasets/rg_normalized_test.csv",
-    # "WordSim353": "datasets/wordsim_normalized_test.csv",
+    "MC": "datasets/mc_normalized.csv",
+    "RG": "datasets/rg_normalized.csv",
+    "WordSim353": "datasets/wordsim_normalized.csv",
 }
 
 abc_sentences = abc.sents()
@@ -84,8 +89,8 @@ def lch(S1, S2):
 def web_jaccard(P, Q):
     """WebJaccard similarity function for a word pair P and Q."""
     N11 = get_search_count(f"{P} AND {Q}")
-    N10 = get_search_count(f"{P} -{Q}")
-    N01 = get_search_count(f"{Q} -{P}")
+    N10 = get_search_count(f"{P} AND NOT {Q}")
+    N01 = get_search_count(f"{Q} AND NOT {P}")
 
     if any(count == -1 for count in (N11, N10, N01)):
         return -1
@@ -232,33 +237,42 @@ models = {
 
 def get_search_count(query):
     """Get the number of search results for a query using the Google Custom Search API."""
+    global current_api_key_index
     url = "https://www.googleapis.com/customsearch/v1"
-    params = {"key": API_KEY, "cx": CX, "q": query}
-    response = requests.get(url, params=params)
+    query_ok = False
 
-    if response.status_code != 200:
-        logger.error(f"Error: {response.json().get('error', {}).get('message')}")
-        return 0
+    while current_api_key_index < len(API_KEYS) and not query_ok:
+        params = {"key": API_KEYS[current_api_key_index], "cx": CX, "q": query}
+        response = requests.get(url, params=params)
 
-    data = response.json()
-    with open("data.json", "w") as f:
-        json.dump(data, f, indent=4)
+        if response.status_code == 200:
+            data = response.json()
+            logger.debug(f"Response for query '{query}': {data}")
+            with open("data.json", "w") as f:
+                json.dump(data, f, indent=4)
 
-    logger.debug(f"Response for query '{query}': {data}")
-    # Check if search information is present in the response
-    try:
-        count = int(data["searchInformation"]["totalResults"])
-        logger.info(f"Result count for query '{query}': {count}")
-    except KeyError:  # Handle cases with no results
-        count = 0
-        logger.warning(f"No results found for query '{query}'")
-    return count
+            # Check if search information is present in the response
+            try:
+                count = int(data["searchInformation"]["totalResults"])
+                logger.info(f"Result count for query '{query}': {count}")
+                query_ok = True
+                return count
+            except KeyError:  # Handle cases with no results
+                logger.warning(f"No results found for query '{query}'")
+                return 0
+        else:
+            error_msg = response.json().get("error", {}).get("message")
+            logger.error(f"Error: {error_msg}")
+            current_api_key_index += 1
+
+    logger.critical("No API keys available for the query!")
+    return -1
 
 
 def get_snippets(query):
     """Get search snippets for a query using the Google Custom Search API."""
     url = "https://www.googleapis.com/customsearch/v1"
-    params = {"key": API_KEY, "cx": CX, "q": query}
+    params = {"key": API_KEYS[current_api_key_index], "cx": CX, "q": query}
     response = requests.get(url, params=params)
 
     if response.status_code != 200:
@@ -352,13 +366,25 @@ def calculate_wordnet_correlations(datasets: dict):
     results = []
     for name, path in datasets.items():
         df = pd.read_csv(path, delimiter=";")
-        web_jaccard_scores = df["web_jaccard_score"].values
+        logger.info(f"Calculating '{name}' similarities from '{path}'")
+
+        # Human annotated similarity scores
         human_scores = df["human_score"].values
-        snippet_scores = df["snippet_similarity"].values
-        fuzzywuzzy_scores = df["fuzzywuzzy_similarity"].values
+
+        # WebJaccard, Snippet, and FuzzyWuzzy similarity scores
+        # web_jaccard_scores = df["web_jaccard_score"].values
+        # snippet_scores = df["snippet_similarity"].values
+        # fuzzywuzzy_scores = df["fuzzywuzzy_similarity"].values
+        web_jaccard_scores = []
+        snippet_scores = []
+        fuzzywuzzy_scores = []
+
+        # WordNet similarity scores
         wu_palmer_scores = []
         path_length_scores = []
         lch_scores = []
+
+        # Word embeddings
         word2vec_scores = []
         fasttext_scores = []
         glove_scores = []
@@ -366,15 +392,23 @@ def calculate_wordnet_correlations(datasets: dict):
 
         for _, row in df.iterrows():
             P, Q = row["word1"], row["word2"]
+            logger.info(f"Calculating similarities for '{P}' and '{Q}'")
 
+            # Wordnet
             wu_palmer = wordnet_similarity(P, Q, 0)
             path_length = wordnet_similarity(P, Q, 1)
             lch = wordnet_similarity(P, Q, 2)
+
+            # WebJaccard
+            web_jaccard = wordnet_similarity(P, Q, 3)
+
+            # Word embeddings
             word2vec = wordnet_similarity(P, Q, 4)
             fasttext = wordnet_similarity(P, Q, 5)
             glove = wordnet_similarity(P, Q, 6)
             distilbert = wordnet_similarity(P, Q, 7)
 
+            web_jaccard_scores.append(web_jaccard)
             wu_palmer_scores.append(wu_palmer)
             path_length_scores.append(path_length)
             lch_scores.append(lch)
@@ -391,8 +425,9 @@ def calculate_wordnet_correlations(datasets: dict):
         df["fasttext_similarity"] = fasttext_scores
         df["glove_similarity"] = glove_scores
         df["distilbert_similarity"] = distilbert_scores
-        df["snippet_similarity"] = snippet_scores
-        df["fuzzywuzzy_similarity"] = fuzzywuzzy_scores
+
+        # df["snippet_similarity"] = snippet_scores
+        # df["fuzzywuzzy_similarity"] = fuzzywuzzy_scores
 
         # Calculate Pearson correlations
         web_jaccard_corr, _ = pearsonr(df["web_jaccard_similarity"], human_scores)
@@ -403,8 +438,8 @@ def calculate_wordnet_correlations(datasets: dict):
         fasttext_corr, _ = pearsonr(df["fasttext_similarity"], human_scores)
         glove_corr, _ = pearsonr(df["glove_similarity"], human_scores)
         distilbert_corr, _ = pearsonr(df["distilbert_similarity"], human_scores)
-        snippet_corr, _ = pearsonr(df["snippet_similarity"], human_scores)
-        fuzzywuzzy_corr, _ = pearsonr(df["fuzzywuzzy_similarity"], human_scores)
+        # snippet_corr, _ = pearsonr(df["snippet_similarity"], human_scores)
+        # fuzzywuzzy_corr, _ = pearsonr(df["fuzzywuzzy_similarity"], human_scores)
 
         results.append(
             {
@@ -417,17 +452,29 @@ def calculate_wordnet_correlations(datasets: dict):
                 "FastText": fasttext_corr,
                 "Glove": glove_corr,
                 "DistilBERT": distilbert_corr,
-                "Snippet": snippet_corr,
-                "FuzzyWuzzy": fuzzywuzzy_corr,
+                # "Snippet": snippet_corr,
+                # "FuzzyWuzzy": fuzzywuzzy_corr,
             }
         )
 
+        # logger.info(
+        #    f"Pearson correlation for {name} - WebJaccard: {web_jaccard_corr:.2f}, WuPalmer: {wu_palmer_corr:.2f}, PathLength: {path_length_corr:.2f}, LCH: {lch_corr:.2f}, Word2Vec: {word2vec_corr:.2f}, FastText: {fasttext_corr:.2f}, Glove: {glove_corr:.2f}, DistilBERT: {distilbert_corr:.2f}, Snippet: {snippet_corr:.2f}, FuzzyWuzzy: {fuzzywuzzy_corr:.2f}"
+        # )
         logger.info(
-            f"Pearson correlation for {name} - WebJaccard: {web_jaccard_corr:.2f}, WuPalmer: {wu_palmer_corr:.2f}, PathLength: {path_length_corr:.2f}, LCH: {lch_corr:.2f}, Word2Vec: {word2vec_corr:.2f}, FastText: {fasttext_corr:.2f}, Glove: {glove_corr:.2f}, DistilBERT: {distilbert_corr:.2f}, Snippet: {snippet_corr:.2f}, FuzzyWuzzy: {fuzzywuzzy_corr:.2f}"
+            f"Pearson correlation for {name} - WebJaccard: {web_jaccard_corr:.2f}, WuPalmer: {wu_palmer_corr:.2f}, PathLength: {path_length_corr:.2f}, LCH: {lch_corr:.2f}, Word2Vec: {word2vec_corr:.2f}, FastText: {fasttext_corr:.2f}, Glove: {glove_corr:.2f}, DistilBERT: {distilbert_corr:.2f}"
         )
 
     # Summarize results in a table
     results_df = pd.DataFrame(results).round(2)
+
+    # Write the results dataframe to a CSV file
+    try:
+        filename = f"results/similarities/{name}.csv"
+        results_df.to_csv(filename, index=False, sep=";")
+        logger.info(f"Wrote similarity results to {filename}")
+    except FileNotFoundError:
+        logger.error("Error writing similarity results to a CSV file")
+
     logger.info(results_df)
 
 
