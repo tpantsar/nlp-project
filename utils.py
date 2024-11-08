@@ -244,6 +244,7 @@ def get_search_count(query):
     while current_api_key_index < len(API_KEYS) and not query_ok:
         params = {"key": API_KEYS[current_api_key_index], "cx": CX, "q": query}
         response = requests.get(url, params=params)
+        logger.debug(f"Current API key: {API_KEYS[current_api_key_index]}")
 
         if response.status_code == 200:
             data = response.json()
