@@ -13,7 +13,6 @@ PRINT_TO_FILE = True
 
 # Configure the logger
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 # Create handlers with UTF-8 encoding
 console_handler = logging.StreamHandler(sys.stdout)
@@ -26,18 +25,19 @@ with open("logger.log", "w", encoding="utf-8"):
 
 # Set level and format for handlers
 console_handler.setLevel(logging.INFO)
-file_handler.setLevel(logging.INFO)
-file_handler_archive.setLevel(logging.INFO)
+file_handler.setLevel(logging.DEBUG)
+file_handler_archive.setLevel(logging.DEBUG)
 
-# Create a formatter and set the format for the handlers
-formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+# Create formatters and set the format for the handlers
+formatter_full = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+formatter_simple = logging.Formatter("%(levelname)s - %(message)s")
 
 if PRINT_TO_CONSOLE:
-    console_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter_simple)
     logger.addHandler(console_handler)
 
 if PRINT_TO_FILE:
-    file_handler.setFormatter(formatter)
-    file_handler_archive.setFormatter(formatter)
+    file_handler.setFormatter(formatter_simple)
+    file_handler_archive.setFormatter(formatter_full)
     logger.addHandler(file_handler)
     logger.addHandler(file_handler_archive)
