@@ -1,0 +1,10 @@
+RG dataset:
+
+WebJaccard: 0.13 (p=2.95e-01)
+WuPalmer: 0.55 (p=2.38e-06)
+PathLength: 0.51 (p=1.33e-05)
+LCH: 0.57 (p=9.16e-07)
+Word2Vec: 0.25 (p=4.04e-02)
+FastText: 0.30 (p=1.48e-02)
+Glove: 0.13 (p=2.95e-01)
+DistilBERT: 0.54 (p=4.02e-06)

@@ -25,7 +25,7 @@ with open("logger.log", "w", encoding="utf-8"):
     pass
 
 # Set level and format for handlers
-console_handler.setLevel(logging.INFO)
+console_handler.setLevel(logging.DEBUG)
 file_handler.setLevel(logging.DEBUG)
 file_handler_archive.setLevel(logging.DEBUG)
 

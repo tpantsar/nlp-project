@@ -4,7 +4,7 @@ from utils import (
     datasets,
     fuzzywuzzy,
     normalize_dataset_scores,
-    web_jaccard,
+    web_jaccard_similarity,
 )
 
 
@@ -12,7 +12,7 @@ def test():
     # Example usage
     P = "book"
     Q = "library"
-    similarity_score = web_jaccard(P, Q)
+    similarity_score = web_jaccard_similarity(P, Q)
     result = f"WebJaccard Similarity between '{P}' and '{Q}': {similarity_score}"
     logger.info(result)
 
@@ -37,8 +37,9 @@ def calculate_overlap_percentage():
 
 def main():
     # normalize_dataset_scores(datasets)
+    # test()
     calculate_wordnet_correlations(datasets)
-    calculate_overlap_percentage()
+    # calculate_overlap_percentage()
 
 
 if __name__ == "__main__":

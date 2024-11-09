@@ -4,7 +4,13 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from logger_config import logger
-from utils import web_jaccard, get_snippets, pre_process, snippet_similarity, fuzzywuzzy
+from utils import (
+    web_jaccard_similarity,
+    get_snippets,
+    pre_process,
+    snippet_similarity,
+    fuzzywuzzy,
+)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -35,7 +41,7 @@ def calculate_webjaccard_scores(dataset, output_file):
             word2,
             word1,
         ) not in existing_pairs:
-            similarity = web_jaccard(word1, word2)
+            similarity = web_jaccard_similarity(word1, word2)
             if similarity == -1:
                 logger.error(
                     f"Error occurred while calculating WebJaccard similarity for '{word1}' and '{word2}'"
@@ -67,7 +73,7 @@ def calculate_webjaccard_scores(dataset, output_file):
 def test_web_jaccard():
     P = "automobile"
     Q = "car"
-    similarity_score = web_jaccard(P, Q)
+    similarity_score = web_jaccard_similarity(P, Q)
     result = f"WebJaccard Similarity between '{P}' and '{Q}': {similarity_score}"
     logger.info(result)
 
@@ -97,7 +103,9 @@ def test_snippet_similarity(word1, word2):
     logger.info(f"Snippet similarity for {word1} and {word2}: {similarity}")
 
     # Append results to a file
-    with open("results/snippet_similarity_rg.txt", "a", encoding="utf-8") as file:
+    with open(
+        "results/similarities_snippet_similarity_mc.txt", "a", encoding="utf-8"
+    ) as file:
         file.write(f"{word1},{word2},{similarity}\n")
 
 
@@ -138,9 +146,9 @@ def calculate_snippet_scores():
 
 
 if __name__ == "__main__":
-    #output_file = "results/webjaccard_scores_rg.csv"
-    #dataset = "datasets/rg_normalized.csv"
-    #calculate_webjaccard_scores(dataset, output_file)
+    # output_file = "results/webjaccard_scores_rg.csv"
+    # dataset = "datasets/rg_normalized.csv"
+    # calculate_webjaccard_scores(dataset, output_file)
 
     # snippets = get_snippets("love")
     # snippets = get_snippets("hate")
@@ -152,16 +160,14 @@ if __name__ == "__main__":
 
     datasets = {
         "mc": "datasets/mc_normalized_test.csv",
-        #"rg": "datasets/rg_normalized_test.csv",
-        #"ws": "datasets/wordsim_normalized_test.csv",
+        # "rg": "datasets/rg_normalized_test.csv",
+        # "ws": "datasets/wordsim_normalized_test.csv",
     }
 
     # calculate_snippet_scores()
 
     # TODO: calculate pearson correlation for the following datasets
     calculate_fuzzywuzzy_scores()
-
-
 
     # calculate_wordnet_correlations(
     #     {

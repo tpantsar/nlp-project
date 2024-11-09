@@ -1,0 +1,2 @@
+Dataset;WebJaccard_Corr;WebJaccard_P;WuPalmer_Corr;WuPalmer_P;PathLength_Corr;PathLength_P;LCH_Corr;LCH_P;Word2Vec_Corr;Word2Vec_P;FastText_Corr;FastText_P;Glove_Corr;Glove_P;DistilBERT_Corr;DistilBERT_P
+RG;0.13;0.3;0.55;0.0;0.51;0.0;0.57;0.0;0.25;0.04;0.3;0.01;0.13;0.29;0.54;0.0

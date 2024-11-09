@@ -50,8 +50,8 @@ current_api_key_index = 0
 
 # Paths to datasets
 datasets = {
-    "MC": "datasets/mc_normalized.csv",
-    "RG": "datasets/rg_normalized.csv",
+    # "MC": "datasets/mc_normalized.csv",
+    # "RG": "datasets/rg_normalized.csv",
     "WordSim353": "datasets/wordsim_normalized.csv",
 }
 
@@ -86,7 +86,7 @@ def lch(S1, S2):
     return None
 
 
-def web_jaccard(P, Q):
+def web_jaccard_similarity(P, Q):
     """WebJaccard similarity function for a word pair P and Q."""
     N11 = get_search_count(f"{P} AND {Q}")
     N10 = get_search_count(f"{P} AND NOT {Q}")
@@ -225,13 +225,12 @@ models = {
     0: wu_palmer,
     1: path_length,
     2: lch,
-    3: web_jaccard,
-    4: word2vec,
-    5: fasttext,
-    6: glove,
-    7: distilbert,
-    8: snippet_similarity,
-    9: fuzzywuzzy,
+    3: word2vec,
+    4: fasttext,
+    5: glove,
+    6: distilbert,
+    7: snippet_similarity,
+    8: fuzzywuzzy,
 }
 
 
@@ -248,7 +247,7 @@ def get_search_count(query):
 
         if response.status_code == 200:
             data = response.json()
-            logger.debug(f"Response for query '{query}': {data}")
+            # logger.debug(f"Response for query '{query}': {data}")
             with open("data.json", "w") as f:
                 json.dump(data, f, indent=4)
 
@@ -362,10 +361,10 @@ def round_dataset_scores(
             logger.error("Error rounding similarity scores in the dataset")
 
 
-def calculate_wordnet_correlations(datasets: dict):
+def calculate_wordnet_correlations(dataset: dict):
     # Compute and print correlations for each dataset
     results = []
-    for name, path in datasets.items():
+    for name, path in dataset.items():
         df = pd.read_csv(path, delimiter=";")
         logger.info(f"Calculating '{name}' similarities from '{path}'")
 
@@ -395,19 +394,22 @@ def calculate_wordnet_correlations(datasets: dict):
             P, Q = row["word1"], row["word2"]
             logger.info(f"Calculating similarities for '{P}' and '{Q}'")
 
-            # Wordnet
-            wu_palmer = wordnet_similarity(P, Q, 0)
-            path_length = wordnet_similarity(P, Q, 1)
-            lch = wordnet_similarity(P, Q, 2)
-
             # WebJaccard
-            web_jaccard = wordnet_similarity(P, Q, 3)
+            web_jaccard = web_jaccard_similarity(P, Q)
+
+            if web_jaccard == -1:  # API key limit reached
+                break
+
+            # Wordnet
+            wu_palmer = calculate_similarity(P, Q, 0)
+            path_length = calculate_similarity(P, Q, 1)
+            lch = calculate_similarity(P, Q, 2)
 
             # Word embeddings
-            word2vec = wordnet_similarity(P, Q, 4)
-            fasttext = wordnet_similarity(P, Q, 5)
-            glove = wordnet_similarity(P, Q, 6)
-            distilbert = wordnet_similarity(P, Q, 7)
+            word2vec = calculate_similarity(P, Q, 3)
+            fasttext = calculate_similarity(P, Q, 4)
+            glove = calculate_similarity(P, Q, 5)
+            distilbert = calculate_similarity(P, Q, 6)
 
             web_jaccard_scores.append(web_jaccard)
             wu_palmer_scores.append(wu_palmer)
@@ -417,6 +419,10 @@ def calculate_wordnet_correlations(datasets: dict):
             fasttext_scores.append(fasttext)
             glove_scores.append(glove)
             distilbert_scores.append(distilbert)
+
+            logger.info(
+                f"Similarities for {P} and {Q} - WebJaccard: {web_jaccard}, WuPalmer: {wu_palmer}, PathLength: {path_length}, LCH: {lch}, Word2Vec: {word2vec}, FastText: {fasttext}, Glove: {glove}, DistilBERT: {distilbert}"
+            )
 
         df["web_jaccard_similarity"] = web_jaccard_scores
         df["wu_palmer_similarity"] = wu_palmer_scores
@@ -430,39 +436,52 @@ def calculate_wordnet_correlations(datasets: dict):
         # df["snippet_similarity"] = snippet_scores
         # df["fuzzywuzzy_similarity"] = fuzzywuzzy_scores
 
-        # Calculate Pearson correlations
-        web_jaccard_corr, _ = pearsonr(df["web_jaccard_similarity"], human_scores)
-        wu_palmer_corr, _ = pearsonr(df["wu_palmer_similarity"], human_scores)
-        path_length_corr, _ = pearsonr(df["path_length_similarity"], human_scores)
-        lch_corr, _ = pearsonr(df["lch_similarity"], human_scores)
-        word2vec_corr, _ = pearsonr(df["word2vec_similarity"], human_scores)
-        fasttext_corr, _ = pearsonr(df["fasttext_similarity"], human_scores)
-        glove_corr, _ = pearsonr(df["glove_similarity"], human_scores)
-        distilbert_corr, _ = pearsonr(df["distilbert_similarity"], human_scores)
-        # snippet_corr, _ = pearsonr(df["snippet_similarity"], human_scores)
-        # fuzzywuzzy_corr, _ = pearsonr(df["fuzzywuzzy_similarity"], human_scores)
+        # Calculate Pearson correlations and p-values
+        web_jaccard_corr, web_jaccard_p = pearsonr(
+            df["web_jaccard_similarity"], human_scores
+        )
+        wu_palmer_corr, wu_palmer_p = pearsonr(df["wu_palmer_similarity"], human_scores)
+        path_length_corr, path_length_p = pearsonr(
+            df["path_length_similarity"], human_scores
+        )
+        lch_corr, lch_p = pearsonr(df["lch_similarity"], human_scores)
+        word2vec_corr, word2vec_p = pearsonr(df["word2vec_similarity"], human_scores)
+        fasttext_corr, fasttext_p = pearsonr(df["fasttext_similarity"], human_scores)
+        glove_corr, glove_p = pearsonr(df["glove_similarity"], human_scores)
+        distilbert_corr, distilbert_p = pearsonr(
+            df["distilbert_similarity"], human_scores
+        )
+        # snippet_corr, snippet_p = pearsonr(df["snippet_similarity"], human_scores)
+        # fuzzywuzzy_corr, fuzzywuzzy_p = pearsonr(df["fuzzywuzzy_similarity"], human_scores)
 
         results.append(
             {
                 "Dataset": name,
-                "WebJaccard": web_jaccard_corr,
-                "WuPalmer": wu_palmer_corr,
-                "PathLength": path_length_corr,
-                "LCH": lch_corr,
-                "Word2Vec": word2vec_corr,
-                "FastText": fasttext_corr,
-                "Glove": glove_corr,
-                "DistilBERT": distilbert_corr,
-                # "Snippet": snippet_corr,
-                # "FuzzyWuzzy": fuzzywuzzy_corr,
+                "WebJaccard_Corr": web_jaccard_corr,
+                "WebJaccard_P": web_jaccard_p,
+                "WuPalmer_Corr": wu_palmer_corr,
+                "WuPalmer_P": wu_palmer_p,
+                "PathLength_Corr": path_length_corr,
+                "PathLength_P": path_length_p,
+                "LCH_Corr": lch_corr,
+                "LCH_P": lch_p,
+                "Word2Vec_Corr": word2vec_corr,
+                "Word2Vec_P": word2vec_p,
+                "FastText_Corr": fasttext_corr,
+                "FastText_P": fasttext_p,
+                "Glove_Corr": glove_corr,
+                "Glove_P": glove_p,
+                "DistilBERT_Corr": distilbert_corr,
+                "DistilBERT_P": distilbert_p,
+                # "Snippet_Corr": snippet_corr,
+                # "Snippet_P": snippet_p,
+                # "FuzzyWuzzy_Corr": fuzzywuzzy_corr,
+                # "FuzzyWuzzy_P": fuzzywuzzy_p,
             }
         )
 
-        # logger.info(
-        #    f"Pearson correlation for {name} - WebJaccard: {web_jaccard_corr:.2f}, WuPalmer: {wu_palmer_corr:.2f}, PathLength: {path_length_corr:.2f}, LCH: {lch_corr:.2f}, Word2Vec: {word2vec_corr:.2f}, FastText: {fasttext_corr:.2f}, Glove: {glove_corr:.2f}, DistilBERT: {distilbert_corr:.2f}, Snippet: {snippet_corr:.2f}, FuzzyWuzzy: {fuzzywuzzy_corr:.2f}"
-        # )
         logger.info(
-            f"Pearson correlation for {name} - WebJaccard: {web_jaccard_corr:.2f}, WuPalmer: {wu_palmer_corr:.2f}, PathLength: {path_length_corr:.2f}, LCH: {lch_corr:.2f}, Word2Vec: {word2vec_corr:.2f}, FastText: {fasttext_corr:.2f}, Glove: {glove_corr:.2f}, DistilBERT: {distilbert_corr:.2f}"
+            f"Pearson correlation for {name} - WebJaccard: {web_jaccard_corr:.2f} (p={web_jaccard_p:.2e}), WuPalmer: {wu_palmer_corr:.2f} (p={wu_palmer_p:.2e}), PathLength: {path_length_corr:.2f} (p={path_length_p:.2e}), LCH: {lch_corr:.2f} (p={lch_p:.2e}), Word2Vec: {word2vec_corr:.2f} (p={word2vec_p:.2e}), FastText: {fasttext_corr:.2f} (p={fasttext_p:.2e}), Glove: {glove_corr:.2f} (p={glove_p:.2e}), DistilBERT: {distilbert_corr:.2f} (p={distilbert_p:.2e})"
         )
 
     # Summarize results in a table
@@ -486,7 +505,7 @@ def get_wordnet_pos(word):
     return tag_dict.get(tag, wn.NOUN)
 
 
-def wordnet_similarity(word1, word2, model_index):
+def calculate_similarity(word1, word2, model_index):
     """Calculate similarity between two words only if they share the same POS."""
     pos1 = get_wordnet_pos(word1)
     pos2 = get_wordnet_pos(word2)

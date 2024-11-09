@@ -1,0 +1,10 @@
+MC Dataset:
+
+WebJaccard: 0.11 (p=5.49e-01)
+WuPalmer: 0.62 (p=2.92e-04)
+PathLength: 0.47 (p=9.26e-03)
+LCH: 0.52 (p=3.59e-03)
+Word2Vec: 0.21 (p=2.60e-01)
+FastText: 0.29 (p=1.17e-01)
+Glove: 0.24 (p=2.01e-01)
+DistilBERT: 0.52 (p=3.18e-03)

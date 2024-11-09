@@ -14,3 +14,32 @@ There is a significant amount of shared content between the snippets retrieved
 indicating that these queries share a considerable amount of content.
 
 This could be due to the fact that discussions about pollution often include mentions of eco-friendly solutions and vice versa.
+
+
+MC Dataset:
+
+Model      Correlation  p-value
+WebJaccard: 0.11 (p=5.49e-01)
+WuPalmer: 0.62 (p=2.92e-04)
+PathLength: 0.47 (p=9.26e-03)
+LCH: 0.52 (p=3.59e-03)
+Word2Vec: 0.21 (p=2.60e-01)
+FastText: 0.29 (p=1.17e-01)
+Glove: 0.24 (p=2.01e-01)
+DistilBERT: 0.52 (p=3.18e-03)
+
+
+RG dataset:
+
+WebJaccard: 0.13 (p=2.95e-01)
+WuPalmer: 0.55 (p=2.38e-06)
+PathLength: 0.51 (p=1.33e-05)
+LCH: 0.57 (p=9.16e-07)
+Word2Vec: 0.25 (p=4.04e-02)
+FastText: 0.30 (p=1.48e-02)
+Glove: 0.13 (p=2.95e-01)
+DistilBERT: 0.54 (p=4.02e-06)
+
+
+Dataset;WebJaccard_Corr;WebJaccard_P;WuPalmer_Corr;WuPalmer_P;PathLength_Corr;PathLength_P;LCH_Corr;LCH_P;Word2Vec_Corr;Word2Vec_P;FastText_Corr;FastText_P;Glove_Corr;Glove_P;DistilBERT_Corr;DistilBERT_P
+RG;0.13;0.3;0.55;0.0;0.51;0.0;0.57;0.0;0.25;0.04;0.3;0.01;0.13;0.29;0.54;0.0
